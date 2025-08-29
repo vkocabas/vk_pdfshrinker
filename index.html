@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PDF Shrinker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+      color: #333;
+      background: #f7f7f7;
+    }
+    h1 {
+      color: #ff69b4;
+    }
+    input, button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #ff69b4;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #ff85c1;
+    }
+  </style>
+</head>
+<body>
+  <h1>PDF Shrinker Tool</h1>
+  <p>Select a PDF to compress/optimize:</p>
+  <input type="file" id="pdfFile" accept=".pdf">
+  <br>
+  <button onclick="shrinkPDF()">Shrink PDF</button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script>
+    async function shrinkPDF() {
+      const input = document.getElementById('pdfFile');
+      if (!input.files.length) {
+        alert("Please select a PDF!");
+        return;
+      }
+
+      const file = input.files[0];
+      const arrayBuffer = await file.arrayBuffer();
+
+      // Load PDF
+      const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+      // Create new PDF to "shrink" (re-save compressed)
+      const newPdf = await PDFLib.PDFDocument.create();
+      const copiedPages = await newPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+      copiedPages.forEach((page) => newPdf.addPage(page));
+
+      // Save compressed PDF
+      const pdfBytes = await newPdf.save({ useObjectStreams: true }); // helps optimize size
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "compressed.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+
+      alert("✅ Done! PDF compressed and ready to download.");
+    }
+  </script>
+</body>
+</html>
